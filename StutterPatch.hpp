@@ -74,6 +74,7 @@ public:
 	{
 		int numSamples = buffer.getSize();
 		float * input = buffer.getSamples(0);
+		float * inputR = (buffer.getChannels() == 2) ? buffer.getSamples(1) : nullptr;
 
 		for (int i = 0; i < numSamples; i++)
 		{
@@ -123,7 +124,11 @@ public:
 				float out = delayOut + (buffer_[readIndex_ + 1] - delayOut) * phaseAcc_;
 
 				input[i] = (firstPass_) ? in : out * mixSlider_ + in * (1.f - mixSlider_);
-
+				if (inputR)
+				{
+					inputR[i] = input[i];
+				}
+				
 				if (stutterMode_ == kPlayModeRev)
 				{
 					readIndex_--;
@@ -209,7 +214,7 @@ private:
 	{
 		stutterMode_ = uint32_t(modeSlider_ * (kNumPlayMode - 1) + 0.5f);
 
-		int scaledValue = rateSlider_ * 15;
+		int scaledValue = (1.f - rateSlider_) * 15;
 
 		float stutterTimeMs = CookStutterTime((int)scaledValue);
 		float stutterTimeSamples = stutterTimeMs * getSampleRate() / 1000.f;
