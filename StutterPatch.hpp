@@ -74,11 +74,18 @@ public:
 	{
 		int numSamples = buffer.getSize();
 		float * input = buffer.getSamples(0);
-		float * inputR = (buffer.getChannels() == 2) ? buffer.getSamples(1) : static_cast<float *>(nullptr);
+
+		int numChannels = buffer.getChannels();
+		float * inputR = (numChannels == 2) ? buffer.getSamples(1) : (float *)nullptr;
 
 		for (int i = 0; i < numSamples; i++)
 		{
-			const float in = input[i];
+			float in = input[i];
+			if (inputR)
+			{
+				in = (in + inputR[i]) * 0.5;
+			}
+
 			// update coefficients
 			if ((i & 0x3f) == 0)
 			{
@@ -106,6 +113,7 @@ public:
 				else
 				{
 					stutter_ = false;
+					firstPass_ = false;
 				}
 			}
 
@@ -120,15 +128,17 @@ public:
 					}
 				}
 
+				int nextReadIndex = readIndex_ + 1;
+				nextReadIndex = (nextReadIndex >= bufferSize_) ? startIndex_ : nextReadIndex;
 				float delayOut = buffer_[readIndex_];
-				float out = delayOut + (buffer_[readIndex_ + 1] - delayOut) * phaseAcc_;
+				float out = delayOut + (buffer_[nextReadIndex] - delayOut) * phaseAcc_;
 
 				input[i] = (firstPass_) ? in : out * mixSlider_ + in * (1.f - mixSlider_);
 				if (inputR)
 				{
 					inputR[i] = input[i];
 				}
-				
+
 				if (stutterMode_ == kPlayModeRev)
 				{
 					readIndex_--;
@@ -143,13 +153,19 @@ public:
 					{
 						// aliased
 						readIndex_ = (readIndex_ < 0) ? bufferSize_ - 1 : readIndex_;
-						readIndex_ = (readIndex_ < endIndex_ && readIndex_ > startIndex_) ? endIndex_ : readIndex_;
-						firstPass_ = false;
+						if (readIndex_ < endIndex_ && readIndex_ > startIndex_)
+						{
+							readIndex_ = endIndex_;
+							firstPass_ = false;
+						}
 					}
 					else
 					{
-						readIndex_ = (readIndex_ < startIndex_) ? endIndex_ : readIndex_;
-						firstPass_ = false;
+						if (readIndex_ < startIndex_)
+						{
+							readIndex_ = endIndex_;
+							firstPass_ = false;
+						}
 					}
 				}
 				else if (stutterMode_ == kPlayModeFwd )
@@ -163,13 +179,19 @@ public:
 					if (endIndex_ < startIndex_)
 					{
 						readIndex_ = (readIndex_ >= bufferSize_) ? 0 : readIndex_;
-						readIndex_ = (readIndex_ >= endIndex_ && readIndex_ < startIndex_) ? startIndex_ : readIndex_;
-						firstPass_ = false;
+						if (readIndex_ >= endIndex_ && readIndex_ < startIndex_)
+						{
+							readIndex_ = startIndex_;
+							firstPass_ = false;
+						}
 					}
 					else
 					{
-						readIndex_ = (readIndex_ > endIndex_) ? startIndex_ : readIndex_;
-						firstPass_ = false;
+						if (readIndex_ > endIndex_)
+						{
+							readIndex_ = startIndex_;
+							firstPass_ = false;
+						}
 					}
 				}
 			}
@@ -257,10 +279,10 @@ private:
 	float  * buffer_;
 	uint16_t previousButtonSample_;
 	uint32_t writeIndex_;
-	uint32_t readIndex_;
-	uint32_t startIndex_;
 	uint32_t endIndex_;
 	uint32_t stutterMode_;
+	int32_t  readIndex_;
+	int32_t  startIndex_;
 	bool     stutter_;
 	bool	 bufferFilled_;
 	bool     firstPass_;
