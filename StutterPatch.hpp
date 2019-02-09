@@ -113,7 +113,7 @@ public:
 				else
 				{
 					stutter_ = false;
-					firstPass_ = false;
+					firstPass_ = true;
 				}
 			}
 
