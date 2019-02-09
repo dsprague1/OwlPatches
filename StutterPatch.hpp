@@ -74,7 +74,7 @@ public:
 	{
 		int numSamples = buffer.getSize();
 		float * input = buffer.getSamples(0);
-		float * inputR = (buffer.getChannels() == 2) ? buffer.getSamples(1) : nullptr;
+		float * inputR = (buffer.getChannels() == 2) ? buffer.getSamples(1) : static_cast<float *>(nullptr);
 
 		for (int i = 0; i < numSamples; i++)
 		{
