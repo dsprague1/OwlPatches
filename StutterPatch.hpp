@@ -47,7 +47,7 @@ public:
 		modeSlider_(0),
 		stutterSlider_(0),
 		tempo_(120),
-		bufferSize_(0x10000)
+		bufferSize_(0x8000)
 	{
 		registerParameter(PARAMETER_A, "Rate");
 		registerParameter(PARAMETER_B, "Start");
@@ -55,9 +55,9 @@ public:
 		registerParameter(PARAMETER_D, "Mode");
 		registerParameter(PARAMETER_E, "Stutter");
 
-		AudioBuffer* buffer = createMemoryBuffer(1, 0x10000);
+		AudioBuffer* buffer = createMemoryBuffer(1, 0x8000);
 		buffer_ = buffer->getSamples(0);
-		for (int i = 0; i < 0x10000; i++)
+		for (int i = 0; i < 0x8000; i++)
 		{
 			buffer_[i] = 0;
 		}
